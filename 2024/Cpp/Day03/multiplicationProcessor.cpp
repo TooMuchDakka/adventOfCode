@@ -2,7 +2,6 @@
 
 #include <fstream>
 #include <sstream>
-#include <vector>
 
 using namespace Day03;
 
@@ -36,8 +35,8 @@ long MultiplicationProcessor::processMultiplicationsFromStream(std::istream& inp
 			&& (lastProcessedKeywordKind != KeywordKind::None ? checkIfNextCharacterInStreamIs(inputStream, '(') : true)
 			&& (lastProcessedKeywordKind == KeywordKind::Mul
 				? extractNumberFromStream(inputStream, multiplicationLFactor)
-				&& checkIfNextCharacterInStreamIs(inputStream, ',')
-				&& extractNumberFromStream(inputStream, multiplicationRFactor)
+					&& checkIfNextCharacterInStreamIs(inputStream, ',')
+					&& extractNumberFromStream(inputStream, multiplicationRFactor)
 				: true)
 			&& (lastProcessedKeywordKind != KeywordKind::None ? checkIfNextCharacterInStreamIs(inputStream, ')') : true));
 
