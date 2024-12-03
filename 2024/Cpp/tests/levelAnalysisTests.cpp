@@ -183,10 +183,37 @@ TEST_F(LevelAnalysisTests, ListContainingDescendinglyOrderedLevelsContainingMult
 	ASSERT_NO_FATAL_FAILURE(assertNumberOfReportsMatches(collection, 0));
 }
 
+TEST_F(LevelAnalysisTests, FirstAndOnlyViolatingLevelInDescendinglyCollectionAtStartOfLatter) {
+	const LevelAnalysis::LevelReportCollection collection{ {8,4,3,2} };
+	ASSERT_NO_FATAL_FAILURE(assertNumberOfReportsMatches(collection, 1));
+}
+
+TEST_F(LevelAnalysisTests, FirstAndOnlyViolatingDuplicateLevelInDescendinglyCollectionAtStartOfLatter) {
+	const LevelAnalysis::LevelReportCollection collection{ {8,8,7,6,3} };
+	ASSERT_NO_FATAL_FAILURE(assertNumberOfReportsMatches(collection, 1));
+}
+
+TEST_F(LevelAnalysisTests, FirstViolatingDuplicateLevelInDescendinglyCollectionAtStartOfLatter) {
+	const LevelAnalysis::LevelReportCollection collection{ {8,8,2,6,3} };
+	ASSERT_NO_FATAL_FAILURE(assertNumberOfReportsMatches(collection, 0));
+}
+
+TEST_F(LevelAnalysisTests, FirstAndOnlyViolatingLevelInDescendinglyCollectionAtEndOfLatter) {
+	const LevelAnalysis::LevelReportCollection collection{ {11,10,6} };
+	ASSERT_NO_FATAL_FAILURE(assertNumberOfReportsMatches(collection, 1));
+}
+
+TEST_F(LevelAnalysisTests, FirstAndViolatingDuplicateLevelInDescendinglyCollectionAtEndOfLatter) {
+	const LevelAnalysis::LevelReportCollection collection{ {11,10,6,6} };
+	ASSERT_NO_FATAL_FAILURE(assertNumberOfReportsMatches(collection, 0));
+}
+
+
+
 TEST_F(LevelAnalysisTests, BigInputExampleForLevelReports) {
 	const std::string inputFilename = "../data/input_day02.txt";
 
-	const std::optional<std::size_t> expectedNumberOfValidReports = 293;
+	const std::optional<std::size_t> expectedNumberOfValidReports = 282;
 	std::optional<std::size_t> actualNumberOfValidReports;
 	ASSERT_NO_FATAL_FAILURE(actualNumberOfValidReports = LevelAnalysis::determineNumberOfValidReports(inputFilename));
 

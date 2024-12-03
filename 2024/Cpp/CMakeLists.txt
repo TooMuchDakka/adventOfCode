@@ -15,6 +15,9 @@ add_executable(Day01 "${CMAKE_CURRENT_SOURCE_DIR}/Day01/listProblems.hpp" "${CMA
 add_library(lib_Day02 STATIC "${CMAKE_CURRENT_SOURCE_DIR}/Day02/levelAnalysis.cpp")
 target_include_directories(lib_Day02 PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Day02")
 
+add_library(lib_Day03 STATIC "${CMAKE_CURRENT_SOURCE_DIR}/Day03/multiplicationProcessor.cpp")
+target_include_directories(lib_Day03 PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Day03")
+
 if(BUILD_TESTS)
 	include(cmake/ExternalDependencies.cmake)
 
