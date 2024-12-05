@@ -21,6 +21,10 @@ target_include_directories(lib_Day03 PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Day03")
 add_library(lib_Day04 STATIC "${CMAKE_CURRENT_SOURCE_DIR}/Day04/xmasWordSearch.cpp")
 target_include_directories(lib_Day04 PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Day04")
 
+add_library(lib_Day05 STATIC "${CMAKE_CURRENT_SOURCE_DIR}/Day05/sleighManualUpdate.cpp")
+target_include_directories(lib_Day05 PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Day05")
+target_include_directories(lib_Day05 PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/utils")
+
 if(BUILD_TESTS)
 	include(cmake/ExternalDependencies.cmake)
 
