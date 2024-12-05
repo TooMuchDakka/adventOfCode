@@ -18,6 +18,9 @@ target_include_directories(lib_Day02 PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Day02")
 add_library(lib_Day03 STATIC "${CMAKE_CURRENT_SOURCE_DIR}/Day03/multiplicationProcessor.cpp")
 target_include_directories(lib_Day03 PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Day03")
 
+add_library(lib_Day04 STATIC "${CMAKE_CURRENT_SOURCE_DIR}/Day04/xmasWordSearch.cpp")
+target_include_directories(lib_Day04 PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Day04")
+
 if(BUILD_TESTS)
 	include(cmake/ExternalDependencies.cmake)
 
