@@ -9,15 +9,44 @@
 namespace Day05 {
 	class SleighManualUpdate {
 	public:
-		[[maybe_unused]] static std::optional<long> determineSumOfValidUpdatePerPageMiddlePagesFromString(const std::string& stringifiedUpdateContent);
-		[[maybe_unused]] static std::optional<long> determineSumOfValidUpdatePerPageMiddlePagesFromFile(const std::string& filename);
+		[[maybe_unused]] static std::optional<unsigned int> determineSumOfValidUpdatePerPageMiddlePagesFromString(const std::string& stringifiedUpdateContent);
+		[[maybe_unused]] static std::optional<unsigned int> determineSumOfValidUpdatePerPageMiddlePagesFromFile(const std::string& filename);
 	protected:
-		using PageOrderingRuleEntry = uint32_t;
-		using PageOrderingPredecessorsEntry = std::set<PageOrderingRuleEntry, std::less<>>;
-		using PageOrderingRulesLookup = std::unordered_map<PageOrderingRuleEntry, PageOrderingPredecessorsEntry>;
+		using PageNumber = uint32_t;
+		using PageOrderingPredecessorsEntry = std::set<PageNumber, std::less<>>;
+		using PageOrderingRulesLookup = std::unordered_map<PageNumber, PageOrderingPredecessorsEntry>;
 
-		[[maybe_unused]] static std::optional<long> determineSumOfValidUpdatePerPageMiddlePagesFromStream(std::istream& inputStreamContainingUpdateData);
-		[[nodiscard]] static const PageOrderingPredecessorsEntry* determineRequiredPredecessorsOfPage(const PageOrderingRulesLookup& pageOrderingRulesLookup, PageOrderingRuleEntry page);
+		struct PagesPerUpdateContainer {
+			std::vector<PageNumber> pages;
+			std::size_t numRecordedPages;
+
+			PagesPerUpdateContainer()
+				: numRecordedPages(0) {}
+
+			void recordPage(PageNumber page)
+			{
+				if (numRecordedPages < pages.size())
+					pages[numRecordedPages] = page;
+				else
+					pages.emplace_back(page);
+
+				numRecordedPages++;
+			}
+
+			void reset()
+			{
+				numRecordedPages = 0;
+			}
+
+			[[maybe_unused]] std::optional<PageNumber> getPageAtMidpointOfRecordedOnes() const
+			{
+				return numRecordedPages && numRecordedPages % 2 ? std::make_optional(pages[(numRecordedPages - 1) / 2]) : std::nullopt;
+			}
+		};
+
+		[[maybe_unused]] static std::optional<unsigned int> determineSumOfValidUpdatePerPageMiddlePagesFromStream(std::istream& inputStreamContainingUpdateData);
+		[[nodiscard]] static const PageOrderingPredecessorsEntry* determineRequiredPredecessorsOfPage(const PageOrderingRulesLookup& pageOrderingRulesLookup, PageNumber page);
+		[[maybe_unused]] static bool isValidUpdate(const PagesPerUpdateContainer& pagesPerUpdateContainer, const PageOrderingRulesLookup& lookupOfRequiredPredecessorsPerPage);
 	};
 }
 
