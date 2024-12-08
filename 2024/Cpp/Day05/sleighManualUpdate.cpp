@@ -1,9 +1,8 @@
 #include "sleighManualUpdate.hpp"
+#include <../utils/numbersFromStreamProcessor.hpp>
 
 #include <fstream>
-#include <set>
 #include <sstream>
-#include <../utils/numbersFromStreamProcessor.hpp>
 #include <unordered_map>
 
 using namespace Day05;
@@ -23,19 +22,17 @@ std::optional<unsigned int> SleighManualUpdate::determineSumOfValidUpdatePerPage
 // START NON-PUBLIC FUNCTIONALITY
 std::optional<unsigned int> SleighManualUpdate::determineSumOfValidUpdatePerPageMiddlePagesFromStream(std::istream& inputStreamContainingUpdateData, TypeOfMiddlePageSums typeOfMiddlePageSumsToDetermine)
 {
-	utils::NumbersFromStreamExtractor::StopageReason currStopageReason;
-
 	bool flipableArrayIndex = false;
 	PageNumber pageOrderingRuleData[2] = { 0,0 };
 	std::unordered_map<PageNumber, std::unordered_set<PageNumber>> pageOrderingRules;
 
-	std::optional<PageNumber> lastParsedNumber;
-	while (utils::NumbersFromStreamExtractor::getNextNumber(inputStreamContainingUpdateData, currStopageReason, lastParsedNumber, '|') && lastParsedNumber.has_value())
+	utils::NumbersFromStreamExtractor::NumberFromStreamExtractionResult<PageNumber> lastNumberFromStreamExtractionResult;
+	while (utils::NumbersFromStreamExtractor::getNextNumber(inputStreamContainingUpdateData, '|', lastNumberFromStreamExtractionResult) && lastNumberFromStreamExtractionResult.extractedNumber.has_value())
 	{
-		pageOrderingRuleData[flipableArrayIndex] = lastParsedNumber.value_or(0);
+		pageOrderingRuleData[flipableArrayIndex] = lastNumberFromStreamExtractionResult.extractedNumber.value_or(0);
 		flipableArrayIndex ^= 1;
 
-		if (currStopageReason != utils::NumbersFromStreamExtractor::Newline)
+		if (lastNumberFromStreamExtractionResult.streamProcessingStopageReason == utils::NumbersFromStreamExtractor::NumberExtracted)
 			continue;
 		
 		const PageNumber keyForPageOrderingLookup = pageOrderingRuleData[1];
@@ -51,17 +48,17 @@ std::optional<unsigned int> SleighManualUpdate::determineSumOfValidUpdatePerPage
 		pageOrderingRuleData[1] = 0;
 	}
 
-	if (currStopageReason != utils::NumbersFromStreamExtractor::Newline)
+	if (lastNumberFromStreamExtractionResult.streamProcessingStopageReason != utils::NumbersFromStreamExtractor::Newline)
 		return std::nullopt;
 
 	unsigned int determinedSumOfUpdatePerPageMiddlePages = 0;
 	PagesPerUpdateContainer pagesPerUpdateContainer;
 
 	// TODO: Handling of update containing duplicate entries (special case)
-	while (utils::NumbersFromStreamExtractor::getNextNumber(inputStreamContainingUpdateData, currStopageReason, lastParsedNumber, ',') && lastParsedNumber.has_value())
+	while (utils::NumbersFromStreamExtractor::getNextNumber(inputStreamContainingUpdateData, ',', lastNumberFromStreamExtractionResult) && lastNumberFromStreamExtractionResult.extractedNumber.has_value())
 	{
-		pagesPerUpdateContainer.recordPage(*lastParsedNumber);
-		if (currStopageReason == utils::NumbersFromStreamExtractor::NumberExtracted)
+		pagesPerUpdateContainer.recordPage(lastNumberFromStreamExtractionResult.extractedNumber.value());
+		if (lastNumberFromStreamExtractionResult.streamProcessingStopageReason == utils::NumbersFromStreamExtractor::NumberExtracted)
 			continue;
 
 		std::size_t indexOfFirstPageViolatingOrdering = 0;
@@ -74,7 +71,9 @@ std::optional<unsigned int> SleighManualUpdate::determineSumOfValidUpdatePerPage
 		}
 		pagesPerUpdateContainer.reset();
 	}
-	return currStopageReason == utils::NumbersFromStreamExtractor::EndOfFile ? std::make_optional(determinedSumOfUpdatePerPageMiddlePages) : std::nullopt;
+	return lastNumberFromStreamExtractionResult.streamProcessingStopageReason == utils::NumbersFromStreamExtractor::EndOfFile || lastNumberFromStreamExtractionResult.streamProcessingStopageReason == utils::NumbersFromStreamExtractor::Newline
+		? std::make_optional(determinedSumOfUpdatePerPageMiddlePages)
+		: std::nullopt;
 }
 
 const SleighManualUpdate::PageOrderingPredecessorsEntry* SleighManualUpdate::determineRequiredPredecessorsOfPage(const PageOrderingRulesLookup& pageOrderingRulesLookup, PageNumber page)

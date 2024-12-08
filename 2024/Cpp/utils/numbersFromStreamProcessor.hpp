@@ -16,15 +16,26 @@ namespace utils {
 		};
 
 		template <typename T>
-		[[nodiscard]] static bool getNextNumber(std::istream& inputStream, StopageReason& determinedStopageReason, std::optional<T>& parsedNumber, char expectedNumberDelimiter)
+		struct NumberFromStreamExtractionResult
 		{
-			determinedStopageReason = StopageReason::Unknown;
-			char lastProcessedCharacter = EOF;
+			std::optional<T> extractedNumber;
+			StopageReason streamProcessingStopageReason;
+
+			NumberFromStreamExtractionResult()
+				: extractedNumber(std::nullopt), streamProcessingStopageReason(StopageReason::Unknown) {}
+		};
+
+		template <typename T>
+		[[nodiscard]] static bool getNextNumber(std::istream& inputStream, char expectedNumberDelimiter, NumberFromStreamExtractionResult<T>& numberFromStreamExtractionResult)
+		{
+			auto determinedStopageReason = StopageReason::Unknown;
 			T temporaryParsedNumberContainer = 0;
 			std::size_t numDigits = 0;
 
-			while (determinedStopageReason == StopageReason::Unknown && (lastProcessedCharacter = static_cast<char>(inputStream.get())) != EOF)
+			// Reading the EOF character will not cause a failure of the stream read operation.
+			for (int lastProcessedCharacter = peekNextCharacterInStream(inputStream); inputStream && determinedStopageReason == StopageReason::Unknown; lastProcessedCharacter = peekNextCharacterInStream(inputStream))
 			{
+				inputStream.get();
 				switch (lastProcessedCharacter)
 				{
 					case '\r':
@@ -34,36 +45,47 @@ namespace utils {
 						#else
 							determinedStopageReason = StopageReason::ParsingError;
 							break;
-						#endif
+						#endif	
 					}
 					case '\n':
 					{
 						determinedStopageReason = StopageReason::Newline;
 						break;
 					}
+					case EOF:
+					{
+						determinedStopageReason = StopageReason::EndOfFile;
+						break;
+					}
 					default:
 					{
-						determinedStopageReason = lastProcessedCharacter == expectedNumberDelimiter ? StopageReason::NumberExtracted : StopageReason::Unknown;
+						const auto casedLastProcessedCharacter = static_cast<char>(lastProcessedCharacter);
+						determinedStopageReason = casedLastProcessedCharacter == expectedNumberDelimiter ? StopageReason::NumberExtracted : StopageReason::Unknown;
 						if (determinedStopageReason == StopageReason::NumberExtracted)
 							continue;
 
 						determinedStopageReason = std::isdigit(lastProcessedCharacter) ? StopageReason::Unknown : StopageReason::ParsingError;
 						temporaryParsedNumberContainer *= !numDigits++ ? 1 : 10;
-						temporaryParsedNumberContainer += lastProcessedCharacter - '0';
+						temporaryParsedNumberContainer += casedLastProcessedCharacter - '0';
 					}
 				}
 			}
 
-			determinedStopageReason = lastProcessedCharacter == EOF ? StopageReason::EndOfFile : determinedStopageReason;
-			if (determinedStopageReason == StopageReason::Newline)
+			if (!inputStream)
 			{
-				parsedNumber = numDigits ? std::make_optional(temporaryParsedNumberContainer) : std::nullopt;
+				numberFromStreamExtractionResult.streamProcessingStopageReason = inputStream.eof() ? StopageReason::EndOfFile : StopageReason::ParsingError;
+				numberFromStreamExtractionResult.extractedNumber = std::nullopt;
+			}
+			else if (determinedStopageReason == StopageReason::Newline || determinedStopageReason == StopageReason::NumberExtracted)
+			{
+				numberFromStreamExtractionResult.streamProcessingStopageReason =determinedStopageReason;
+				numberFromStreamExtractionResult.extractedNumber = numDigits ? std::make_optional(temporaryParsedNumberContainer) : std::nullopt;
 				return numDigits;
 			}
-			if (determinedStopageReason == StopageReason::NumberExtracted)
+			else
 			{
-				parsedNumber = temporaryParsedNumberContainer;
-				return true;
+				numberFromStreamExtractionResult.streamProcessingStopageReason = StopageReason::ParsingError;
+				numberFromStreamExtractionResult.extractedNumber = std::nullopt;
 			}
 			return false;
 		}
