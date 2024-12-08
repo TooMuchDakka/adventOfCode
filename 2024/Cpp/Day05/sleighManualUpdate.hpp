@@ -2,18 +2,24 @@
 #define DAY05_SLEIGH_MANUAL_UPDATE_HPP
 
 #include <optional>
-#include <set>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace Day05 {
 	class SleighManualUpdate {
 	public:
-		[[maybe_unused]] static std::optional<unsigned int> determineSumOfValidUpdatePerPageMiddlePagesFromString(const std::string& stringifiedUpdateContent);
-		[[maybe_unused]] static std::optional<unsigned int> determineSumOfValidUpdatePerPageMiddlePagesFromFile(const std::string& filename);
+		enum TypeOfMiddlePageSums
+		{
+			OnlyValidUpdates,
+			OnlyInvalidUpdates
+		};
+
+		[[maybe_unused]] static std::optional<unsigned int> determineSumOfValidUpdatePerPageMiddlePagesFromString(const std::string& stringifiedUpdateContent, TypeOfMiddlePageSums typeOfMiddlePageSumsToDetermine);
+		[[maybe_unused]] static std::optional<unsigned int> determineSumOfValidUpdatePerPageMiddlePagesFromFile(const std::string& filename, TypeOfMiddlePageSums typeOfMiddlePageSumsToDetermine);
 	protected:
 		using PageNumber = uint32_t;
-		using PageOrderingPredecessorsEntry = std::set<PageNumber, std::less<>>;
+		using PageOrderingPredecessorsEntry = std::unordered_set<PageNumber>;
 		using PageOrderingRulesLookup = std::unordered_map<PageNumber, PageOrderingPredecessorsEntry>;
 
 		struct PagesPerUpdateContainer {
@@ -44,9 +50,10 @@ namespace Day05 {
 			}
 		};
 
-		[[maybe_unused]] static std::optional<unsigned int> determineSumOfValidUpdatePerPageMiddlePagesFromStream(std::istream& inputStreamContainingUpdateData);
+		[[maybe_unused]] static std::optional<unsigned int> determineSumOfValidUpdatePerPageMiddlePagesFromStream(std::istream& inputStreamContainingUpdateData, TypeOfMiddlePageSums typeOfMiddlePageSumsToDetermine);
 		[[nodiscard]] static const PageOrderingPredecessorsEntry* determineRequiredPredecessorsOfPage(const PageOrderingRulesLookup& pageOrderingRulesLookup, PageNumber page);
-		[[maybe_unused]] static bool isValidUpdate(const PagesPerUpdateContainer& pagesPerUpdateContainer, const PageOrderingRulesLookup& lookupOfRequiredPredecessorsPerPage);
+		[[maybe_unused]] static bool isValidUpdate(const PagesPerUpdateContainer& pagesPerUpdateContainer, const PageOrderingRulesLookup& lookupOfRequiredPredecessorsPerPage, std::size_t& indexOfFirstPageViolatingOrdering);
+		[[nodiscard]] static std::optional<PageNumber> getPageAtMidpointOfOrderedRecordedOnes(PagesPerUpdateContainer& pagesPerUpdateContainer, std::size_t indexOfFirstPageViolatingOrdering, const PageOrderingRulesLookup& lookupOfRequiredPredecessorsPerPage);
 	};
 }
 
