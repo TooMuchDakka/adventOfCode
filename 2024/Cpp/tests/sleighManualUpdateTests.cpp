@@ -97,5 +97,5 @@ TEST_F(SleighManualUpdateTests, DetermineSumOfValidUpdatesFromFile)
 
 TEST_F(SleighManualUpdateTests, DetermineSumOfInvalidUpdatesFromFile)
 {
-	SleighManualUpdateTests::assertCorrectSumOfValidUpdateMiddlePagesIsFoundInFile(R"(C:\School\adventOfCode\2024\data\input_day05.txt)", SleighManualUpdate::TypeOfMiddlePageSums::OnlyInvalidUpdates, 0);
+	SleighManualUpdateTests::assertCorrectSumOfValidUpdateMiddlePagesIsFoundInFile(R"(C:\School\adventOfCode\2024\data\input_day05.txt)", SleighManualUpdate::TypeOfMiddlePageSums::OnlyInvalidUpdates, 5479);
 }
