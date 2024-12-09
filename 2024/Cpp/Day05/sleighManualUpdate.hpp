@@ -46,14 +46,15 @@ namespace Day05 {
 
 			[[maybe_unused]] std::optional<PageNumber> getPageAtMidpointOfRecordedOnes() const
 			{
-				return numRecordedPages && numRecordedPages % 2 ? std::make_optional(pages[(numRecordedPages - 1) / 2]) : std::nullopt;
+				return numRecordedPages && numRecordedPages % 2 != 0 ? std::make_optional(pages[(numRecordedPages - 1) / 2]) : std::nullopt;
 			}
 		};
 
 		[[maybe_unused]] static std::optional<unsigned int> determineSumOfValidUpdatePerPageMiddlePagesFromStream(std::istream& inputStreamContainingUpdateData, TypeOfMiddlePageSums typeOfMiddlePageSumsToDetermine);
 		[[nodiscard]] static const PageOrderingPredecessorsEntry* determineRequiredPredecessorsOfPage(const PageOrderingRulesLookup& pageOrderingRulesLookup, PageNumber page);
-		[[maybe_unused]] static bool isValidUpdate(const PagesPerUpdateContainer& pagesPerUpdateContainer, const PageOrderingRulesLookup& lookupOfRequiredPredecessorsPerPage, std::size_t& indexOfFirstPageViolatingOrdering);
-		[[nodiscard]] static std::optional<PageNumber> getPageAtMidpointOfOrderedRecordedOnes(PagesPerUpdateContainer& pagesPerUpdateContainer, std::size_t indexOfFirstPageViolatingOrdering, const PageOrderingRulesLookup& lookupOfRequiredPredecessorsPerPage);
+		[[maybe_unused]] static bool isValidUpdate(const PagesPerUpdateContainer& pagesPerUpdateContainer, const PageOrderingRulesLookup& lookupOfRequiredPredecessorsPerPage);
+		[[nodiscard]] static std::optional<PageNumber> getPageAtMidpointOfOrderedRecordedOnes(PagesPerUpdateContainer& pagesPerUpdateContainer, const PageOrderingRulesLookup& lookupOfRequiredPredecessorsPerPage);
+		[[nodiscard]] static bool isPageRequiredAsPredeccesorOfOther(const PageOrderingRulesLookup& pageOrderingRulesLookup, PageNumber potentialPredecessor, PageNumber referencePage);
 	};
 }
 
