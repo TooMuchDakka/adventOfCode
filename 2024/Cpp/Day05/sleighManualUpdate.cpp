@@ -1,6 +1,7 @@
 #include "sleighManualUpdate.hpp"
 #include <../utils/numbersFromStreamProcessor.hpp>
 
+#include <algorithm>
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
@@ -25,7 +26,7 @@ std::optional<unsigned int> SleighManualUpdate::determineSumOfValidUpdatePerPage
 	bool flipableArrayIndex = false;
 	PageNumber pageOrderingRuleData[2] = { 0,0 };
 	std::unordered_map<PageNumber, std::unordered_set<PageNumber>> pageOrderingRules;
-
+	
 	utils::NumbersFromStreamExtractor::NumberFromStreamExtractionResult<PageNumber> lastNumberFromStreamExtractionResult;
 	while (utils::NumbersFromStreamExtractor::getNextNumber(inputStreamContainingUpdateData, '|', lastNumberFromStreamExtractionResult) && lastNumberFromStreamExtractionResult.extractedNumber.has_value())
 	{
@@ -52,6 +53,11 @@ std::optional<unsigned int> SleighManualUpdate::determineSumOfValidUpdatePerPage
 		return std::nullopt;
 
 	unsigned int determinedSumOfUpdatePerPageMiddlePages = 0;
+	// The current implementation works best with a uniform distruibution of the number of elements contained in every update definition
+	// due to the vector being reused for the next update by filling it up starting at index 0 instead of clearing the previous contents
+	// and thus also requiring no reallocation for every update (excluding resizing of the container).
+	// For a non-uniform distribution, the container could hog a lot of memory due to its size only increasing and never decreasing until
+	// all update definitions were processed.
 	PagesPerUpdateContainer pagesPerUpdateContainer;
 
 	// TODO: Handling of update containing duplicate entries (special case)
@@ -61,14 +67,14 @@ std::optional<unsigned int> SleighManualUpdate::determineSumOfValidUpdatePerPage
 		if (lastNumberFromStreamExtractionResult.streamProcessingStopageReason == utils::NumbersFromStreamExtractor::NumberExtracted)
 			continue;
 
-		std::size_t indexOfFirstPageViolatingOrdering = 0;
-		const bool x = isValidUpdate(pagesPerUpdateContainer, pageOrderingRules, indexOfFirstPageViolatingOrdering);
-		if (const bool shouldAddMidpointToSum = !((typeOfMiddlePageSumsToDetermine == TypeOfMiddlePageSums::OnlyValidUpdates) ^ isValidUpdate(pagesPerUpdateContainer, pageOrderingRules, indexOfFirstPageViolatingOrdering)); shouldAddMidpointToSum)
-		{
-			determinedSumOfUpdatePerPageMiddlePages += typeOfMiddlePageSumsToDetermine == TypeOfMiddlePageSums::OnlyValidUpdates
-				? pagesPerUpdateContainer.getPageAtMidpointOfRecordedOnes().value_or(0)
-				: SleighManualUpdate::getPageAtMidpointOfOrderedRecordedOnes(pagesPerUpdateContainer, indexOfFirstPageViolatingOrdering, pageOrderingRules).value_or(0);
-		}
+		const bool shouldAddMidpointToSum = !((typeOfMiddlePageSumsToDetermine == TypeOfMiddlePageSums::OnlyValidUpdates) ^ isValidUpdate(pagesPerUpdateContainer, pageOrderingRules));
+		determinedSumOfUpdatePerPageMiddlePages +=
+			shouldAddMidpointToSum ?
+			(typeOfMiddlePageSumsToDetermine == TypeOfMiddlePageSums::OnlyValidUpdates
+				? pagesPerUpdateContainer.getPageAtMidpointOfRecordedOnes()
+				: SleighManualUpdate::getPageAtMidpointOfOrderedRecordedOnes(pagesPerUpdateContainer, pageOrderingRules)).value_or(0)
+			: 0;
+
 		pagesPerUpdateContainer.reset();
 	}
 	return lastNumberFromStreamExtractionResult.streamProcessingStopageReason == utils::NumbersFromStreamExtractor::EndOfFile || lastNumberFromStreamExtractionResult.streamProcessingStopageReason == utils::NumbersFromStreamExtractor::Newline
@@ -81,7 +87,7 @@ const SleighManualUpdate::PageOrderingPredecessorsEntry* SleighManualUpdate::det
 	return pageOrderingRulesLookup.count(page) ? &pageOrderingRulesLookup.at(page) : nullptr;
 }
 
-bool SleighManualUpdate::isValidUpdate(const PagesPerUpdateContainer& pagesPerUpdateContainer, const PageOrderingRulesLookup& lookupOfRequiredPredecessorsPerPage, std::size_t& indexOfFirstPageViolatingOrdering)
+bool SleighManualUpdate::isValidUpdate(const PagesPerUpdateContainer& pagesPerUpdateContainer, const PageOrderingRulesLookup& lookupOfRequiredPredecessorsPerPage)
 {
 	if (pagesPerUpdateContainer.numRecordedPages < 2)
 		return true;
@@ -96,46 +102,27 @@ bool SleighManualUpdate::isValidUpdate(const PagesPerUpdateContainer& pagesPerUp
 		const PageOrderingPredecessorsEntry* requiredPredecessorsOfPage = determineRequiredPredecessorsOfPage(lookupOfRequiredPredecessorsPerPage, pagesPerUpdateContainer.pages[containerIndex]);
 		for (std::size_t j = pagesPerUpdateContainer.numRecordedPages - 1; j > containerIndex && isValidUpdate && requiredPredecessorsOfPage; --j)
 			isValidUpdate &= !requiredPredecessorsOfPage->count(pagesPerUpdateContainer.pages[j]);
-
-		indexOfFirstPageViolatingOrdering = !isValidUpdate ? containerIndex : 0;
 	}
 	return isValidUpdate;
 }
 
-std::optional<SleighManualUpdate::PageNumber> SleighManualUpdate::getPageAtMidpointOfOrderedRecordedOnes(PagesPerUpdateContainer& pagesPerUpdateContainer, std::size_t indexOfFirstPageViolatingOrdering, const PageOrderingRulesLookup& lookupOfRequiredPredecessorsPerPage)
+std::optional<SleighManualUpdate::PageNumber> SleighManualUpdate::getPageAtMidpointOfOrderedRecordedOnes(PagesPerUpdateContainer& pagesPerUpdateContainer, const PageOrderingRulesLookup& lookupOfRequiredPredecessorsPerPage)
 {
-	if (!pagesPerUpdateContainer.numRecordedPages)
+	if (pagesPerUpdateContainer.numRecordedPages < 2)
 		return std::nullopt;
-	if (pagesPerUpdateContainer.numRecordedPages == 1)
-		return pagesPerUpdateContainer.pages.front();
 
-	// TODO: One could also perform search from 0 -> indexOfFirstPageViolatingOrdering and simply insert violating element into sorted range[indexOfFirstPageViolatingOrdering, n).
-
-	// Array is initially sorted in range [indexOfFirstPageViolatingOrdering+1, n) with indexOfFirstPageViolatingOrdering indicating first page that should be inserted into sorted range
-	std::size_t lastProcessedContainerIdx = indexOfFirstPageViolatingOrdering;
-	const std::size_t numElementsToCheck = indexOfFirstPageViolatingOrdering + !indexOfFirstPageViolatingOrdering;
-	for (std::size_t i = 0; i < numElementsToCheck; ++i)
-	{
-		const PageNumber currProcessedPage = pagesPerUpdateContainer.pages[lastProcessedContainerIdx];
-		const PageOrderingPredecessorsEntry* requiredPredecessorsOfPage = determineRequiredPredecessorsOfPage(lookupOfRequiredPredecessorsPerPage, pagesPerUpdateContainer.pages[lastProcessedContainerIdx]);
-		// I.	Perform search from (currIndex -> n - 1] to find first element, at index j, that violates ordering in sorted range.
-		// II.	Insert element[currIndex] at index j and perform right shift by one position for elements in range (currIndex, j)
-		// III.	Due to our move of the violating element to its correct idnex and due to subsequent shift, the elements at indices (currIndex, n] are sorted
-		// IV.	Continue the search the currIndex 
-		for (std::size_t j = lastProcessedContainerIdx + 1; j < pagesPerUpdateContainer.numRecordedPages && requiredPredecessorsOfPage; ++j)
+	std::sort(
+		pagesPerUpdateContainer.pages.begin(),
+		std::next(pagesPerUpdateContainer.pages.begin(), pagesPerUpdateContainer.numRecordedPages),
+		[&lookupOfRequiredPredecessorsPerPage](const PageNumber lPageNumber, const PageNumber rPageNumber)
 		{
-			if (!requiredPredecessorsOfPage->count(pagesPerUpdateContainer.pages[j]))
-				continue;
-
-			const PageNumber backupOfLastShiftedPage = pagesPerUpdateContainer.pages[j];
-			// Perform left shift by one position of elements from [lastProcessedContainer, swapPosition - 1] 
-			for (std::size_t k = lastProcessedContainerIdx; k < j - 1; ++k)
-				pagesPerUpdateContainer.pages[k] = pagesPerUpdateContainer.pages[k + 1];
-			pagesPerUpdateContainer.pages[lastProcessedContainerIdx] = backupOfLastShiftedPage;
-			pagesPerUpdateContainer.pages[j] = currProcessedPage;
-			break;
-		}
-		lastProcessedContainerIdx -= currProcessedPage == pagesPerUpdateContainer.pages[lastProcessedContainerIdx];
-	}
+			return isPageRequiredAsPredeccesorOfOther(lookupOfRequiredPredecessorsPerPage, lPageNumber, rPageNumber);
+		});
 	return pagesPerUpdateContainer.getPageAtMidpointOfRecordedOnes();
+}
+
+inline bool SleighManualUpdate::isPageRequiredAsPredeccesorOfOther(const PageOrderingRulesLookup& pageOrderingRulesLookup, PageNumber potentialPredecessor, PageNumber referencePage)
+{
+	const PageOrderingPredecessorsEntry* requiredPredecessorsOfPage = determineRequiredPredecessorsOfPage(pageOrderingRulesLookup, referencePage);
+	return requiredPredecessorsOfPage && requiredPredecessorsOfPage->count(potentialPredecessor);
 }

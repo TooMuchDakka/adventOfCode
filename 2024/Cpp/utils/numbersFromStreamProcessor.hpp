@@ -71,22 +71,20 @@ namespace utils {
 				}
 			}
 
+			numberFromStreamExtractionResult.extractedNumber = numDigits ? std::make_optional(temporaryParsedNumberContainer) : std::nullopt;
 			if (!inputStream)
 			{
 				numberFromStreamExtractionResult.streamProcessingStopageReason = inputStream.eof() ? StopageReason::EndOfFile : StopageReason::ParsingError;
-				numberFromStreamExtractionResult.extractedNumber = std::nullopt;
+				return inputStream.eof();
 			}
-			else if (determinedStopageReason == StopageReason::Newline || determinedStopageReason == StopageReason::NumberExtracted)
+
+			if (determinedStopageReason == StopageReason::Newline || determinedStopageReason == StopageReason::NumberExtracted)
 			{
 				numberFromStreamExtractionResult.streamProcessingStopageReason =determinedStopageReason;
-				numberFromStreamExtractionResult.extractedNumber = numDigits ? std::make_optional(temporaryParsedNumberContainer) : std::nullopt;
 				return numDigits;
 			}
-			else
-			{
-				numberFromStreamExtractionResult.streamProcessingStopageReason = StopageReason::ParsingError;
-				numberFromStreamExtractionResult.extractedNumber = std::nullopt;
-			}
+			numberFromStreamExtractionResult.streamProcessingStopageReason = StopageReason::ParsingError;
+			numberFromStreamExtractionResult.extractedNumber = std::nullopt;
 			return false;
 		}
 
