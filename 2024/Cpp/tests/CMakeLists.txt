@@ -3,6 +3,7 @@ set(TEST_SOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/multiplicationProcessorTests.cpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/xmasWordSearchTests.cpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/sleighManualUpdateTests.cpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/wardPositionTests.cpp"
 )
 
 add_executable(Tests ${TEST_SOURCES})
