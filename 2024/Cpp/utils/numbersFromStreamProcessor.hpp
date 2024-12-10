@@ -41,7 +41,9 @@ namespace utils {
 					case '\r':
 					{
 						#if defined(_WIN32) || defined(_WIN64)
-							continue;
+						if (const int peekedNextCharacter = peekNextCharacterInStream(inputStream); peekedNextCharacter == EOF || peekedNextCharacter != '\n')
+							determinedStopageReason = StopageReason::ParsingError;
+						break;
 						#else
 							determinedStopageReason = StopageReason::ParsingError;
 							break;
