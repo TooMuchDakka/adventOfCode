@@ -32,6 +32,11 @@ namespace utils
 			return row == other.row && col == other.col;
 		}
 
+		bool operator !=(const AsciiMapPosition& other) const
+		{
+			return row != other.row || col != other.col;
+		}
+
 		size_t operator()(const AsciiMapPosition& mapPositionToHash) const noexcept {
 			return std::hash<std::size_t>()(mapPositionToHash.row) * 31 + std::hash<std::size_t>()(mapPositionToHash.col);
 		}
