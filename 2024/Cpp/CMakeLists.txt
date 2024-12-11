@@ -25,6 +25,7 @@ target_include_directories(lib_aoc
 		"${CMAKE_CURRENT_SOURCE_DIR}/Day04"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Day05"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Day06"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Day07"
 )
 target_sources(lib_aoc 
 	PRIVATE 
@@ -34,6 +35,7 @@ target_sources(lib_aoc
 		"${CMAKE_CURRENT_SOURCE_DIR}/Day04/xmasWordSearch.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Day05/sleighManualUpdate.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Day06/wardPositions.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Day07/equationSolver.cpp"
 	PUBLIC
 		"${CMAKE_CURRENT_SOURCE_DIR}/Day01/listProblems.hpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Day02/levelAnalysis.hpp"
@@ -41,6 +43,7 @@ target_sources(lib_aoc
 		"${CMAKE_CURRENT_SOURCE_DIR}/Day04/xmasWordSearch.hpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Day05/sleighManualUpdate.hpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Day06/wardPositions.hpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Day07/equationSolver.hpp"
 )
 target_link_libraries(lib_aoc PRIVATE lib_aoc_utils)
 

@@ -2,6 +2,7 @@
 #define NUMBERS_FROM_STREAM_PROCESSOR_HPP
 
 #include <istream>
+#include <limits>
 #include <optional>
 
 namespace utils {
@@ -28,6 +29,12 @@ namespace utils {
 		template <typename T>
 		[[nodiscard]] static bool getNextNumber(std::istream& inputStream, char expectedNumberDelimiter, NumberFromStreamExtractionResult<T>& numberFromStreamExtractionResult)
 		{
+			return getNextNumber(inputStream, expectedNumberDelimiter, numberFromStreamExtractionResult, "");
+		}
+
+		template <typename T>
+		[[nodiscard]] static bool getNextNumber(std::istream& inputStream, char expectedNumberDelimiter, NumberFromStreamExtractionResult<T>& numberFromStreamExtractionResult, const std::string& optionallyIgorableCharacterCollection)
+		{
 			auto determinedStopageReason = StopageReason::Unknown;
 			T temporaryParsedNumberContainer = 0;
 			std::size_t numDigits = 0;
@@ -41,9 +48,9 @@ namespace utils {
 					case '\r':
 					{
 						#if defined(_WIN32) || defined(_WIN64)
-						if (const int peekedNextCharacter = peekNextCharacterInStream(inputStream); peekedNextCharacter == EOF || peekedNextCharacter != '\n')
-							determinedStopageReason = StopageReason::ParsingError;
-						break;
+							if (const int peekedNextCharacter = peekNextCharacterInStream(inputStream); peekedNextCharacter == EOF || peekedNextCharacter != '\n')
+								determinedStopageReason = StopageReason::ParsingError;
+							break;
 						#else
 							determinedStopageReason = StopageReason::ParsingError;
 							break;
@@ -61,14 +68,23 @@ namespace utils {
 					}
 					default:
 					{
-						const auto casedLastProcessedCharacter = static_cast<char>(lastProcessedCharacter);
-						determinedStopageReason = casedLastProcessedCharacter == expectedNumberDelimiter ? StopageReason::NumberExtracted : StopageReason::Unknown;
+						const auto castedLastProcessedCharacter = static_cast<char>(lastProcessedCharacter);
+						if (optionallyIgorableCharacterCollection.find_first_of(castedLastProcessedCharacter) != std::string::npos)
+							continue;
+
+						determinedStopageReason = castedLastProcessedCharacter == expectedNumberDelimiter ? StopageReason::NumberExtracted : StopageReason::Unknown;
 						if (determinedStopageReason == StopageReason::NumberExtracted)
 							continue;
 
+						if (numDigits == std::numeric_limits<T>::max())
+						{
+							determinedStopageReason = StopageReason::ParsingError;
+							continue;
+						}
+
 						determinedStopageReason = std::isdigit(lastProcessedCharacter) ? StopageReason::Unknown : StopageReason::ParsingError;
 						temporaryParsedNumberContainer *= !numDigits++ ? 1 : 10;
-						temporaryParsedNumberContainer += casedLastProcessedCharacter - '0';
+						temporaryParsedNumberContainer += castedLastProcessedCharacter - '0';
 					}
 				}
 			}
@@ -82,7 +98,7 @@ namespace utils {
 
 			if (determinedStopageReason == StopageReason::Newline || determinedStopageReason == StopageReason::NumberExtracted)
 			{
-				numberFromStreamExtractionResult.streamProcessingStopageReason =determinedStopageReason;
+				numberFromStreamExtractionResult.streamProcessingStopageReason = determinedStopageReason;
 				return numDigits;
 			}
 			numberFromStreamExtractionResult.streamProcessingStopageReason = StopageReason::ParsingError;
