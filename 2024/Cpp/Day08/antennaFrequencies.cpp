@@ -8,29 +8,29 @@ using namespace Day08;
 std::optional<std::size_t> AntennaFrequencies::determineNumberOfUniqueAntiNodesFromString(const std::string& stringifiedAntennaField)
 {
 	std::istringstream inputStringStream(stringifiedAntennaField, std::ios_base::in);
-	return determineNumberOfUniqueAntiNodesFromStream(inputStringStream);
+	return determineNumberOfUniqueAntiNodesFromStream(inputStringStream, false);
 }
 
 std::optional<std::size_t> AntennaFrequencies::determineNumberOfUniqueAntiNodesFromFile(const std::string& antennaFieldFilename)
 {
 	std::ifstream inputFileStream(antennaFieldFilename, std::ios_base::in);
-	return inputFileStream.good() ? determineNumberOfUniqueAntiNodesFromStream(inputFileStream) : std::nullopt;
+	return inputFileStream.good() ? determineNumberOfUniqueAntiNodesFromStream(inputFileStream, false) : std::nullopt;
 }
 
 std::optional<std::size_t> AntennaFrequencies::determineNumberOfUniqueAntiNodesWithResonantHarmonicsFromString(const std::string& stringifiedAntennaField)
 {
 	std::istringstream inputStringStream(stringifiedAntennaField, std::ios_base::in);
-	return determineNumberOfUniqueAntiNodesFromStreamConsideringResonantHarmonics(inputStringStream);
+	return determineNumberOfUniqueAntiNodesFromStream(inputStringStream, true);
 }
 
 std::optional<std::size_t> AntennaFrequencies::determineNumberOfUniqueAntiNodesWithResonantHarmonicsFromFile(const std::string& antennaFieldFilename)
 {
 	std::ifstream inputFileStream(antennaFieldFilename, std::ios_base::in);
-	return inputFileStream.good() ? determineNumberOfUniqueAntiNodesFromStreamConsideringResonantHarmonics(inputFileStream) : std::nullopt;
+	return inputFileStream.good() ? determineNumberOfUniqueAntiNodesFromStream(inputFileStream, true) : std::nullopt;
 }
 
 // START OF NON-PUBLIC FUNCTIONALITY
-std::optional<std::size_t> AntennaFrequencies::determineNumberOfUniqueAntiNodesFromStream(std::istream& inputStream)
+std::optional<std::size_t> AntennaFrequencies::determineNumberOfUniqueAntiNodesFromStream(std::istream& inputStream, bool shouldConsiderResonantHarmonics)
 {
 	const std::optional<AntennaFieldData> antennaFieldData = processAntennaFieldData(inputStream);
 	if (!antennaFieldData)
@@ -48,43 +48,7 @@ std::optional<std::size_t> AntennaFrequencies::determineNumberOfUniqueAntiNodesF
 		if (antennaPositions.size() < 2)
 			continue;
 
-		std::unordered_set<utils::AsciiMapPosition, utils::AsciiMapPosition> antennasUsedAsSources(antennaPositions.size());
-		for (std::size_t sourceIndex = 0; sourceIndex < antennaPositions.size(); ++sourceIndex)
-		{
-			for (std::size_t destinationIndex = 0; destinationIndex < antennaPositions.size(); ++destinationIndex)
-			{
-				const utils::AsciiMapPosition& sourceAntenna = antennaPositions.at(sourceIndex);
-				if (antennasUsedAsSources.count(sourceAntenna) || sourceIndex == destinationIndex)
-					continue;
-
-				const utils::AsciiMapPosition& destinationAntenna = antennaPositions.at(destinationIndex);
-				if (const std::optional<utils::AsciiMapPosition>& antiNodePosition = determineAntiNodePosition(sourceAntenna, destinationAntenna, mapDimensions, false); antiNodePosition.has_value())
-					uniqueAntiNodePositions.emplace(*antiNodePosition);
-			}
-		}
-	}
-	return uniqueAntiNodePositions.size();
-}
-
-std::optional<std::size_t> AntennaFrequencies::determineNumberOfUniqueAntiNodesFromStreamConsideringResonantHarmonics(std::istream& inputStream)
-{
-	const std::optional<AntennaFieldData> antennaFieldData = processAntennaFieldData(inputStream);
-	if (!antennaFieldData)
-		return std::nullopt;
-
-	if (!antennaFieldData->mapDimensions.row || !antennaFieldData->mapDimensions.col)
-		return 0;
-
-	const AntennaPerTypeLookup& antennaPerTypeLookup = antennaFieldData->antennas;
-	const utils::AsciiMapPosition& mapDimensions = antennaFieldData->mapDimensions;
-
-	RecordedAntiNodePositions uniqueAntiNodePositions;
-	for (const auto& [antennaType, antennaPositions] : antennaPerTypeLookup)
-	{
-		if (antennaPositions.size() < 2)
-			continue;
-
-		const bool shouldConsiderResonantHarmonics = antennaPositions.size() > 2;
+		const bool doesAntennaTypeAllowForResonantHarmonics = shouldConsiderResonantHarmonics ? antennaPositions.size() > 2 : false;
 		std::unordered_set<utils::AsciiMapPosition, utils::AsciiMapPosition> antennasUsedAsSources(antennaPositions.size());
 		for (std::size_t sourceIndex = 0; sourceIndex < antennaPositions.size(); ++sourceIndex)
 		{
@@ -95,19 +59,19 @@ std::optional<std::size_t> AntennaFrequencies::determineNumberOfUniqueAntiNodesF
 					continue;
 
 				utils::AsciiMapPosition currSourceAntennna = sourceAntenna;
-				if (shouldConsiderResonantHarmonics)
+				if (doesAntennaTypeAllowForResonantHarmonics)
 					uniqueAntiNodePositions.emplace(sourceAntenna);
 
 				utils::AsciiMapPosition nextDestinationAntenna = antennaPositions.at(destinationIndex);
-				std::optional<utils::AsciiMapPosition> antiNodePosition = determineAntiNodePosition(sourceAntenna, nextDestinationAntenna, mapDimensions, shouldConsiderResonantHarmonics);
+				std::optional<utils::AsciiMapPosition> antiNodePosition = determineAntiNodePosition(sourceAntenna, nextDestinationAntenna, mapDimensions, doesAntennaTypeAllowForResonantHarmonics);
 
 				while (antiNodePosition.has_value())
 				{
 					uniqueAntiNodePositions.emplace(*antiNodePosition);
 					nextDestinationAntenna = currSourceAntennna;
 					currSourceAntennna = *antiNodePosition;
-					antiNodePosition = shouldConsiderResonantHarmonics
-						? determineAntiNodePosition(currSourceAntennna, nextDestinationAntenna, mapDimensions, shouldConsiderResonantHarmonics)
+					antiNodePosition = doesAntennaTypeAllowForResonantHarmonics
+						? determineAntiNodePosition(currSourceAntennna, nextDestinationAntenna, mapDimensions, doesAntennaTypeAllowForResonantHarmonics)
 						: std::nullopt;
 				}
 			}

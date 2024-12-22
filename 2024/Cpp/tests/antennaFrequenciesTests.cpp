@@ -208,7 +208,6 @@ TEST_F(AntennaFrequenciesTests, MixtureOfAntennasWithAndWithoutResonantHarmonics
 	//	"....Y....X"
 	//	"..X.Y....."
 	//	"....X....."
-
 	AntennaFrequenciesTests::assertCorrectNumberOfUniqueAntiNodesPositionsAreFoundInStringifiedMap(
 		"T.........\r\n"
 		"...T......\r\n"
@@ -227,15 +226,6 @@ TEST_F(AntennaFrequenciesTests, OverlappingHarmonicsOnlyCountedOnce)
 	//	"...Y.....X"
 	//	"..Y......."
 	//	".Y........"
-	//
-
-	//	"X....XX..."
-	//	"...X.X...."
-	//	".X..X.X..."
-	//	"...X.....X"
-	//	"..X......."
-	//	".X........"
-
 	AntennaFrequenciesTests::assertCorrectNumberOfUniqueAntiNodesPositionsAreFoundInStringifiedMap(
 		"T.........\r\n"
 		"...T......\r\n"
@@ -254,7 +244,6 @@ TEST_F(AntennaFrequenciesTests, ResonantHarmonicsForAntennasInLineCorrectlyDeter
 	//	"....Y....."
 	//	"....Y....."
 	//	"....X....."
-	//
 	AntennaFrequenciesTests::assertCorrectNumberOfUniqueAntiNodesPositionsAreFoundInStringifiedMap(
 		"..........\r\n"
 		"..........\r\n"
@@ -272,7 +261,6 @@ TEST_F(AntennaFrequenciesTests, CheckOverlappingResonantHarmonicsForAntennaTypes
 	//	"..X...X.."
 	//	".X.a.a.X."
 	//	"X...a...X"
-
 	AntennaFrequenciesTests::assertCorrectNumberOfUniqueAntiNodesPositionsAreFoundInStringifiedMap(
 		"....A....\r\n"
 		"...A.A...\r\n"
@@ -299,5 +287,5 @@ TEST_F(AntennaFrequenciesTests, UniqueAntiNodesConsideringResonantHarmonicsForSi
 TEST_F(AntennaFrequenciesTests, DetermineUniqueAntiNodesFromFileConsideringResonantHarmonics)
 {
 	ASSERT_NO_FATAL_FAILURE(AntennaFrequenciesTests::assertCorrectNumberOfUniqueAntiNodesPositionsAreFoundInMapReadFromFile(
-		R"(C:\School\adventOfCode\2024\data\input_day08.txt)", 0, true));
+		R"(C:\School\adventOfCode\2024\data\input_day08.txt)", 861, true));
 }
