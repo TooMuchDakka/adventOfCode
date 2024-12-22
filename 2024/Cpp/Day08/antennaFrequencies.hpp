@@ -13,6 +13,9 @@ namespace Day08 {
 		[[nodiscard]] static std::optional<std::size_t> determineNumberOfUniqueAntiNodesFromString(const std::string& stringifiedAntennaField);
 		[[nodiscard]] static std::optional<std::size_t> determineNumberOfUniqueAntiNodesFromFile(const std::string& antennaFieldFilename);
 
+		[[nodiscard]] static std::optional<std::size_t> determineNumberOfUniqueAntiNodesWithResonantHarmonicsFromString(const std::string& stringifiedAntennaField);
+		[[nodiscard]] static std::optional<std::size_t> determineNumberOfUniqueAntiNodesWithResonantHarmonicsFromFile(const std::string& antennaFieldFilename);
+
 	protected:
 		using AntennaType = char;
 		using AntennaPerTypeLookup = std::unordered_map<AntennaType, std::vector<utils::AsciiMapPosition>>;
@@ -27,6 +30,7 @@ namespace Day08 {
 		};
 
 		[[nodiscard]] static std::optional<std::size_t> determineNumberOfUniqueAntiNodesFromStream(std::istream& inputStream);
+		[[nodiscard]] static std::optional<std::size_t> determineNumberOfUniqueAntiNodesFromStreamConsideringResonantHarmonics(std::istream& inputStream);
 		[[nodiscard]] static std::optional<AntennaFieldData> processAntennaFieldData(std::istream& inputStream);
 		[[nodiscard]] static std::optional<utils::AsciiMapPosition> determineAntiNodePosition(const utils::AsciiMapPosition& sourceAntennaPosition, const utils::AsciiMapPosition& destinationAntennaPosition, const utils::AsciiMapPosition& mapDimensions);
 	};

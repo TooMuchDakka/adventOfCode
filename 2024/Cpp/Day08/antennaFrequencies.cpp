@@ -17,6 +17,18 @@ std::optional<std::size_t> AntennaFrequencies::determineNumberOfUniqueAntiNodesF
 	return inputFileStream.good() ? determineNumberOfUniqueAntiNodesFromStream(inputFileStream) : std::nullopt;
 }
 
+std::optional<std::size_t> AntennaFrequencies::determineNumberOfUniqueAntiNodesWithResonantHarmonicsFromString(const std::string& stringifiedAntennaField)
+{
+	std::istringstream inputStringStream(stringifiedAntennaField, std::ios_base::in);
+	return determineNumberOfUniqueAntiNodesFromStreamConsideringResonantHarmonics(inputStringStream);
+}
+
+std::optional<std::size_t> AntennaFrequencies::determineNumberOfUniqueAntiNodesWithResonantHarmonicsFromFile(const std::string& antennaFieldFilename)
+{
+	std::ifstream inputFileStream(antennaFieldFilename, std::ios_base::in);
+	return inputFileStream.good() ? determineNumberOfUniqueAntiNodesFromStreamConsideringResonantHarmonics(inputFileStream) : std::nullopt;
+}
+
 // START OF NON-PUBLIC FUNCTIONALITY
 std::optional<std::size_t> AntennaFrequencies::determineNumberOfUniqueAntiNodesFromStream(std::istream& inputStream)
 {
@@ -52,6 +64,11 @@ std::optional<std::size_t> AntennaFrequencies::determineNumberOfUniqueAntiNodesF
 		}
 	}
 	return uniqueAntiNodePositions.size();
+}
+
+std::optional<std::size_t> AntennaFrequencies::determineNumberOfUniqueAntiNodesFromStreamConsideringResonantHarmonics(std::istream& inputStream)
+{
+	return std::nullopt;
 }
 
 std::optional<AntennaFrequencies::AntennaFieldData> AntennaFrequencies::processAntennaFieldData(std::istream& inputStream)
