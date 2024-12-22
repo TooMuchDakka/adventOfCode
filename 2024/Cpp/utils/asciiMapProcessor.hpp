@@ -10,13 +10,13 @@ namespace utils
 {
 	struct AsciiMapPosition
 	{
-		std::size_t row;
-		std::size_t col;
+		long row;
+		long col;
 
 		AsciiMapPosition()
 			: row(0), col(0) {}
 
-		explicit AsciiMapPosition(std::size_t row, std::size_t col)
+		explicit AsciiMapPosition(long row, long col)
 			: row(row), col(col) {}
 
 		bool operator<(const AsciiMapPosition& other) const
@@ -37,8 +37,18 @@ namespace utils
 			return row != other.row || col != other.col;
 		}
 
-		size_t operator()(const AsciiMapPosition& mapPositionToHash) const noexcept {
-			return std::hash<std::size_t>()(mapPositionToHash.row) * 31 + std::hash<std::size_t>()(mapPositionToHash.col);
+		friend AsciiMapPosition operator-(const AsciiMapPosition& lPos, const AsciiMapPosition& rPos)
+		{
+			return AsciiMapPosition(lPos.row - rPos.row, lPos.col - rPos.col);
+		}
+
+		friend AsciiMapPosition operator+(const AsciiMapPosition& lPos, const AsciiMapPosition& rPos)
+		{
+			return AsciiMapPosition(lPos.row + rPos.row, lPos.col + rPos.col);
+		}
+
+		long operator()(const AsciiMapPosition& mapPositionToHash) const noexcept {
+			return std::hash<long>()(mapPositionToHash.row) * 31 + std::hash<long>()(mapPositionToHash.col);
 		}
 	};
 
@@ -72,8 +82,8 @@ namespace utils
 		[[nodiscard]] bool findNextElement(std::istream& inputStream, const CharacterToEnumMapping* optionalCharacterToEnumMapping, AsciiMapProcessingResult& containerForFoundEntry, bool doNotReportNewlines)
 		{
 			auto determinedStopageReason = StopageReason::Unknown;
-			std::size_t columnPositionOfFoundElement = 0;
-			std::size_t rowPositionOfFoundElement = 0;
+			long columnPositionOfFoundElement = 0;
+			long rowPositionOfFoundElement = 0;
 			std::optional<T> foundElement;
 
 			// Reading the EOF character will not cause a failure of the stream read operation.
@@ -85,7 +95,6 @@ namespace utils
 					case '\r':
 					{
 						#if defined(_WIN32) || defined(_WIN64)
-							++lastProcessedColumn;
 							determinedStopageReason = setBoundaryComponentOfMapOnlyIfNotSetOrEqualOtherwiseStopProcessing(numColsOfAsciiField, lastProcessedColumn);
 							if (const int peekedNextCharacter = peekNextCharacterInStream(inputStream); peekedNextCharacter == EOF || peekedNextCharacter != '\n')
 								determinedStopageReason = StopageReason::ParsingError;
@@ -179,13 +188,13 @@ namespace utils
 		}
 
 	protected:
-		std::size_t lastProcessedColumn;
-		std::size_t lastProcessedRow;
+		long lastProcessedColumn;
+		long lastProcessedRow;
 
-		std::size_t numColsOfAsciiField;
-		std::size_t numRowsOfAsciiField;
+		long numColsOfAsciiField;
+		long numRowsOfAsciiField;
 
-		[[nodiscard]] StopageReason setBoundaryComponentOfMapOnlyIfNotSetOrEqualOtherwiseStopProcessing(std::size_t& boundaryComponentToSet, std::size_t newSizeOfBoundaryComponent)
+		[[nodiscard]] StopageReason setBoundaryComponentOfMapOnlyIfNotSetOrEqualOtherwiseStopProcessing(long& boundaryComponentToSet, long newSizeOfBoundaryComponent)
 		{
 			if (boundaryComponentToSet == newSizeOfBoundaryComponent)
 				return StopageReason::Unknown;
