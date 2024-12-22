@@ -45,6 +45,7 @@ namespace utils
 	template <typename T>
 	class AsciiMapProcessor {
 	public:
+		// TODO: Extract from class 
 		enum StopageReason
 		{
 			Unknown,
@@ -68,7 +69,7 @@ namespace utils
 			: lastProcessedColumn(0), lastProcessedRow(0), numColsOfAsciiField(0), numRowsOfAsciiField(0) {}
 
 		using CharacterToEnumMapping = std::unordered_map<char, T>;
-		[[nodiscard]] bool findNextElement(std::istream& inputStream, const CharacterToEnumMapping& characterToEnumMapping, AsciiMapProcessingResult& containerForFoundEntry, bool doNotReportNewlines)
+		[[nodiscard]] bool findNextElement(std::istream& inputStream, const CharacterToEnumMapping* optionalCharacterToEnumMapping, AsciiMapProcessingResult& containerForFoundEntry, bool doNotReportNewlines)
 		{
 			auto determinedStopageReason = StopageReason::Unknown;
 			std::size_t columnPositionOfFoundElement = 0;
@@ -122,17 +123,34 @@ namespace utils
 					default:
 					{
 						const auto castedLastProcessedCharacter = static_cast<char>(lastProcessedCharacter);
-						const auto foundMappingForCharacter = characterToEnumMapping.find(castedLastProcessedCharacter);
-						if (foundMappingForCharacter == characterToEnumMapping.end())
+						if constexpr (!std::is_same_v<T, char>)
 						{
-							++lastProcessedColumn;
-							continue;
+							if (!optionalCharacterToEnumMapping)
+							{
+								determinedStopageReason = StopageReason::Unknown;
+								break;
+							}
+							const auto foundMappingForCharacter = optionalCharacterToEnumMapping->find(castedLastProcessedCharacter);
+							if (foundMappingForCharacter == optionalCharacterToEnumMapping->end())
+							{
+								++lastProcessedColumn;
+								continue;
+							}
+							foundElement = foundMappingForCharacter->second;
 						}
-
+						else
+						{
+							// We are implicitly assuming that the dot character can be ignored in the ascii map for now. This might change in the future
+							if (castedLastProcessedCharacter == '.')
+							{
+								++lastProcessedColumn;
+								continue;
+							}
+							foundElement = castedLastProcessedCharacter;
+						}
 						columnPositionOfFoundElement = lastProcessedColumn++;
 						rowPositionOfFoundElement = lastProcessedRow;
 						determinedStopageReason = StopageReason::ElementFound;
-						foundElement = foundMappingForCharacter->second;
 					}
 				}
 			}

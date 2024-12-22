@@ -50,7 +50,7 @@ std::optional<WardPositions::AsciiMapProcessingResult> WardPositions::processAsc
 	utils::AsciiMapPosition initialWardPosition;
 	ObstacleLookup obstaclePositions;
 
-	while (asciiWardMovementProcessor.findNextElement(inputStream, asciiWardMovementCharacterMappings, lastFoundRelevantAsciiMapEntry, true) && lastFoundRelevantAsciiMapEntry.data.has_value())
+	while (asciiWardMovementProcessor.findNextElement(inputStream, &asciiWardMovementCharacterMappings, lastFoundRelevantAsciiMapEntry, true) && lastFoundRelevantAsciiMapEntry.data.has_value())
 	{
 		const WardMovementMapEntryTypes relevantElement = *lastFoundRelevantAsciiMapEntry.data;
 		const utils::AsciiMapPosition positionOfRelevantElement = lastFoundRelevantAsciiMapEntry.position;
