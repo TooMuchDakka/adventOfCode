@@ -58,7 +58,7 @@ std::optional<std::size_t> AntennaFrequencies::determineNumberOfUniqueAntiNodesF
 					continue;
 
 				const utils::AsciiMapPosition& destinationAntenna = antennaPositions.at(destinationIndex);
-				if (const std::optional<utils::AsciiMapPosition>& antiNodePosition = determineAntiNodePosition(sourceAntenna, destinationAntenna, mapDimensions); antiNodePosition.has_value())
+				if (const std::optional<utils::AsciiMapPosition>& antiNodePosition = determineAntiNodePosition(sourceAntenna, destinationAntenna, mapDimensions, false); antiNodePosition.has_value())
 					uniqueAntiNodePositions.emplace(*antiNodePosition);
 			}
 		}
@@ -68,7 +68,52 @@ std::optional<std::size_t> AntennaFrequencies::determineNumberOfUniqueAntiNodesF
 
 std::optional<std::size_t> AntennaFrequencies::determineNumberOfUniqueAntiNodesFromStreamConsideringResonantHarmonics(std::istream& inputStream)
 {
-	return std::nullopt;
+	const std::optional<AntennaFieldData> antennaFieldData = processAntennaFieldData(inputStream);
+	if (!antennaFieldData)
+		return std::nullopt;
+
+	if (!antennaFieldData->mapDimensions.row || !antennaFieldData->mapDimensions.col)
+		return 0;
+
+	const AntennaPerTypeLookup& antennaPerTypeLookup = antennaFieldData->antennas;
+	const utils::AsciiMapPosition& mapDimensions = antennaFieldData->mapDimensions;
+
+	RecordedAntiNodePositions uniqueAntiNodePositions;
+	for (const auto& [antennaType, antennaPositions] : antennaPerTypeLookup)
+	{
+		if (antennaPositions.size() < 2)
+			continue;
+
+		const bool shouldConsiderResonantHarmonics = antennaPositions.size() > 2;
+		std::unordered_set<utils::AsciiMapPosition, utils::AsciiMapPosition> antennasUsedAsSources(antennaPositions.size());
+		for (std::size_t sourceIndex = 0; sourceIndex < antennaPositions.size(); ++sourceIndex)
+		{
+			for (std::size_t destinationIndex = 0; destinationIndex < antennaPositions.size(); ++destinationIndex)
+			{
+				const utils::AsciiMapPosition& sourceAntenna = antennaPositions.at(sourceIndex);
+				if (antennasUsedAsSources.count(sourceAntenna) || sourceIndex == destinationIndex)
+					continue;
+
+				utils::AsciiMapPosition currSourceAntennna = sourceAntenna;
+				if (shouldConsiderResonantHarmonics)
+					uniqueAntiNodePositions.emplace(sourceAntenna);
+
+				utils::AsciiMapPosition nextDestinationAntenna = antennaPositions.at(destinationIndex);
+				std::optional<utils::AsciiMapPosition> antiNodePosition = determineAntiNodePosition(sourceAntenna, nextDestinationAntenna, mapDimensions, shouldConsiderResonantHarmonics);
+
+				while (antiNodePosition.has_value())
+				{
+					uniqueAntiNodePositions.emplace(*antiNodePosition);
+					nextDestinationAntenna = currSourceAntennna;
+					currSourceAntennna = *antiNodePosition;
+					antiNodePosition = shouldConsiderResonantHarmonics
+						? determineAntiNodePosition(currSourceAntennna, nextDestinationAntenna, mapDimensions, shouldConsiderResonantHarmonics)
+						: std::nullopt;
+				}
+			}
+		}
+	}
+	return uniqueAntiNodePositions.size();
 }
 
 std::optional<AntennaFrequencies::AntennaFieldData> AntennaFrequencies::processAntennaFieldData(std::istream& inputStream)
@@ -95,14 +140,13 @@ std::optional<AntennaFrequencies::AntennaFieldData> AntennaFrequencies::processA
 	return AntennaFieldData(asciiMapProcessor.determineMapBounderies(), std::move(antennaLookup));
 }
 
-std::optional<utils::AsciiMapPosition> AntennaFrequencies::determineAntiNodePosition(const utils::AsciiMapPosition& sourceAntennaPosition, const utils::AsciiMapPosition& destinationAntennaPosition, const utils::AsciiMapPosition& mapDimensions)
+std::optional<utils::AsciiMapPosition> AntennaFrequencies::determineAntiNodePosition(const utils::AsciiMapPosition& sourceAntennaPosition, const utils::AsciiMapPosition& destinationAntennaPosition, const utils::AsciiMapPosition& mapDimensions, bool isDestinationAllowedAsAntiNode)
 {
 	const utils::AsciiMapPosition antiNodePosition = sourceAntennaPosition - (destinationAntennaPosition - sourceAntennaPosition);
-	
-	return antiNodePosition != sourceAntennaPosition
-		&& antiNodePosition != destinationAntennaPosition
+
+	return (antiNodePosition == destinationAntennaPosition ? isDestinationAllowedAsAntiNode : true)
 		&& antiNodePosition.row >= 0 && antiNodePosition.row < mapDimensions.row
 		&& antiNodePosition.col >= 0 && antiNodePosition.col < mapDimensions.col
 		? std::make_optional(antiNodePosition)
-			: std::nullopt;
+		: std::nullopt;
 }

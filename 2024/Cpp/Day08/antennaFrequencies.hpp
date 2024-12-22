@@ -32,7 +32,8 @@ namespace Day08 {
 		[[nodiscard]] static std::optional<std::size_t> determineNumberOfUniqueAntiNodesFromStream(std::istream& inputStream);
 		[[nodiscard]] static std::optional<std::size_t> determineNumberOfUniqueAntiNodesFromStreamConsideringResonantHarmonics(std::istream& inputStream);
 		[[nodiscard]] static std::optional<AntennaFieldData> processAntennaFieldData(std::istream& inputStream);
-		[[nodiscard]] static std::optional<utils::AsciiMapPosition> determineAntiNodePosition(const utils::AsciiMapPosition& sourceAntennaPosition, const utils::AsciiMapPosition& destinationAntennaPosition, const utils::AsciiMapPosition& mapDimensions);
+		[[nodiscard]] static std::optional<utils::AsciiMapPosition> determineAntiNodePosition(const utils::AsciiMapPosition& sourceAntennaPosition, const utils::AsciiMapPosition& destinationAntennaPosition, const utils::AsciiMapPosition& mapDimensions, bool isDestinationAllowedAsAntiNode);
+		[[nodiscard]] static std::optional<utils::AsciiMapPosition> determineOffsetBetweenAntennas(const utils::AsciiMapPosition& sourceAntennaPosition, const utils::AsciiMapPosition& destinationAntennaPosition);
 	};
 }
 
